@@ -12,6 +12,7 @@
 
 #include "igh.h"
 #include "motor.h"
+#include "timesync.h"
 #include "term.h"
 /**************************命令行信息*****************************/
 // 全局静态变量
@@ -73,7 +74,7 @@ const struct timespec cycletime = {0, PERIOD_NS};
 /* EtherCAT 主站 */
 static ec_master_t *master = NULL;
 static ec_master_state_t master_state = {};
-
+static uint64_t dc_time_ns;
 /**
  * 循环任务
  */
@@ -92,10 +93,12 @@ void cyclic_task(struct _SlaveConfig *slave_config, struct _Domain *domain)
 
     /* 获取当前时间 */
     clock_gettime(CLOCK_TO_USE, &wakeupTime);
+    uint64_t wakeup_time = getSysTime() + 10 * PERIOD_NS;
     while (!g_quit) {
+        sleepUntil(master, wakeup_time, &wakeup_time);
         /* 周期时间：1ms */
-        wakeupTime = timespec_add(wakeupTime, cycletime);
-        clock_nanosleep(CLOCK_TO_USE, TIMER_ABSTIME, &wakeupTime, NULL);
+        // wakeupTime = timespec_add(wakeupTime, cycletime);
+        // clock_nanosleep(CLOCK_TO_USE, TIMER_ABSTIME, &wakeupTime, NULL);
 
 #ifdef MEASURE_TIMING
         clock_gettime(CLOCK_TO_USE, &startTime);
@@ -161,7 +164,12 @@ void cyclic_task(struct _SlaveConfig *slave_config, struct _Domain *domain)
     motor_main(domain);
 
     ecrt_domain_queue(domain->domain);
+    // 在 ecrt_master_send() 之前同步分布式时钟
+    int32_t dc_diff_ns = syncDC(master, &dc_time_ns);
+    // 发送所有队列中的数据包
     ecrt_master_send(master);
+    // 更新主站时钟
+    updateMasterClock(dc_diff_ns);
 
 #ifdef MEASURE_TIMING
     clock_gettime(CLOCK_TO_USE, &endTime);
@@ -173,7 +181,7 @@ void cyclic_task(struct _SlaveConfig *slave_config, struct _Domain *domain)
  */
 void* ethercatMaster(void* arg)
 {
-    int status = 0, ret = -1;
+    int ret = -1;
     int SLAVE_NUM = sizeof(slave_info) / sizeof(struct _SlaveInfo);
 
     struct _SlaveConfig slave_config[SLAVE_NUM];
@@ -193,7 +201,6 @@ void* ethercatMaster(void* arg)
     _domain.domain = ecrt_master_create_domain(master);
 
     if (!_domain.domain) {
-        status = -1;
         printf("--> main: Create domain failed.\n");
         goto err_leave;
     }
@@ -206,7 +213,6 @@ void* ethercatMaster(void* arg)
                     slave_info[i].position, slave_info[i].vendor_id,
                     slave_info[i].product_code);
         if (!slave_config[i].sc) {
-            status = -1;
             printf("--> main: Get slave configuration failed.\n");
             goto err_leave;
         }
@@ -217,7 +223,6 @@ void* ethercatMaster(void* arg)
     for (int i = 0; i < SLAVE_NUM; i++) {
         ret = ecrt_slave_config_pdos(slave_config[i].sc, EC_END, slave_motor_syncs);
         if (ret != 0) {
-            status = -1;
             printf("--> main: Configuration PDO failed.\n");
             goto err_leave;
         }
@@ -225,16 +230,34 @@ void* ethercatMaster(void* arg)
     /* 注册PDO条目到Domain */
     ret = ecrt_domain_reg_pdo_entry_list(_domain.domain, domain_regs);
     if (ret != 0) {
-        status = -1;
+        
         printf("--> main: Failed to register bunch of PDO entries for domain.\n");
         goto err_leave;
     }
     printf("--> main: Success to register bunch of PDO entries for domain.\n");
+    
+    dc_time_ns = getSysTime();
+    // 为每个从站配置分布式时钟 DC
+    for (uint32_t i = 0; i < SLAVE_NUM; i++)
+    {
+        ecrt_slave_config_sdo16(slave_config[i].sc, 0x1c32, 1, 2);
+        ecrt_slave_config_sdo16(slave_config[i].sc, 0x1c33, 1, 2);
+        ecrt_slave_config_dc(slave_config[i].sc, 0x0300, PERIOD_NS, PERIOD_NS / 4, 0, 0);
+    }
+    printf("Configuration DC success.");
+
+    // 选择参考时钟（第一个从站）
+    ret = ecrt_master_select_reference_clock(master, slave_config[0].sc);
+    if (ret < 0)
+    {
+        printf("Failed to select reference clock: %s\n", strerror(-ret));
+        goto err_leave;
+    }
 
     /* 激活EtherCAT主站 */
     ret = ecrt_master_activate(master);
     if (ret < 0) {
-        status = -1;
+        
         printf("--> main: Activate master failed.\n");
         goto err_leave;
     }
@@ -243,7 +266,6 @@ void* ethercatMaster(void* arg)
     /* 获取过程数据内存的指针 */
     _domain.domain_pd = ecrt_domain_data(_domain.domain);
     if (!_domain.domain_pd) {
-        status = -1;
         printf("--> main: Get pointer to the process data memory failed.\n");
         goto err_leave;
     }

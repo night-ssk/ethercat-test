@@ -5,13 +5,13 @@
 #include <ecrt.h> 
 #define MOTOR_NUM 1
 extern ec_sync_info_t slave_motor_syncs[];
-
+//struct _Domain;  // 提前声明结构体
 //PP模式
 struct _motorParm {
     unsigned int ctrl_word;         //6040-00h
     unsigned int operation_mode;    //6060-00h
     unsigned int target_pos;        //607A-00h
-    unsigned int step_div;          //6092-01h
+    //unsigned int step_div;          //6092-01h
     //homeing
     unsigned int home_way;          //6098-00h
     unsigned int home_spd_high;     //6099-01h

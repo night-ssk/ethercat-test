@@ -15,7 +15,7 @@ ec_pdo_entry_info_t slave_motor_pdo_entries[] = {
     {0x6040, 0x00, 16}, //控制字 U16
     {0x6060, 0x00, 8},  //操作模式 I8
     {0x607a, 0x00, 32}, //目标位置 S32
-    // {0x6092, 0x01, 32}, //细分数 U32
+   // {0x6092, 0x01, 32}, //细分数 U32
     {0x6098, 0x00, 8},  //回零方式 I8
     {0x6099, 0x01, 32}, //回零速度-快 U32
     {0x6099, 0x02, 32}, //回零速度-慢 U32
@@ -122,47 +122,33 @@ void pp(struct _Domain* domain, int target_pos) {
     * 电机位置控制CSP模式
 */
 void csp(struct _Domain* domain, int target_pos) {
-  //  static int times = 0;
+    static int times = 0;
     for (int i = 0; i < MOTOR_NUM; i++) {
         int8_t operation_mode_display = EC_READ_U16(domain->domain_pd + motor_parm[i].operation_mode_display);// 读取状态字
         uint16_t status = EC_READ_U16(domain->domain_pd + motor_parm[i].status_word);// 读取状态字
-        if(operation_mode_display == MODEL_CSP && (status & 0xFF) == 0x37){
+       // if(operation_mode_display == MODEL_CSP){
             EC_WRITE_S32(domain->domain_pd + motor_parm[i].target_pos, target_pos); // 设置目标位置
-        }else if(operation_mode_display == MODEL_CSP && (status & 0xFF) == 0x31) {
-            EC_WRITE_U16(domain->domain_pd + motor_parm[i].ctrl_word, 0x07); // 电机得电
-        }else if(operation_mode_display == MODEL_CSP && (status & 0xFF) == 0x33) {
-                    EC_WRITE_U16(domain->domain_pd + motor_parm[i].ctrl_word, 0x0f); // 重置
-        }else {
+      //  }else {
+            if(operation_mode_display != MODEL_CSP)
             EC_WRITE_S8(domain->domain_pd + motor_parm[i].operation_mode, MODEL_CSP); // 设置操作模式
+            if(times  == 1000)
+            {
             EC_WRITE_U16(domain->domain_pd + motor_parm[i].ctrl_word, 0x06); // 电机得电
-        }
-        // if (times == 0) {
-        //     EC_WRITE_S8(domain->domain_pd + motor_parm[i].operation_mode, MODEL_CSP); // 设置操作模式
-        //     //延时delay
-        // }else if (times == 500) {
-        //     EC_WRITE_U16(domain->domain_pd + motor_parm[i].ctrl_word, 0x06); // 电机得电
-        // }else if(times == 1000) {
-        //     EC_WRITE_U16(domain->domain_pd + motor_parm[i].ctrl_word, 0x07); // 电机得电
-        // }else if(times == 1500) {
-        //     EC_WRITE_U16(domain->domain_pd + motor_parm[i].ctrl_word, 0x0f); // 电机得电
-        // }else if(times >= 1501) {
-        //     EC_WRITE_S32(domain->domain_pd + motor_parm[i].target_pos, target_pos); // 设置目标位置
-        //     // //根据系统时间计算发送频率
-        //     // //获取时间  
-        //     // static struct timespec ts_start, ts_end;
-        //     // if (times == 4) {
-        //     //     clock_gettime(CLOCK_REALTIME, &ts_start);
-        //     // } if(times % 1000 == 0 && times > 4) {
-        //     //     clock_gettime(CLOCK_REALTIME, &ts_end);
-        //     //     long time = (ts_end.tv_sec - ts_start.tv_sec) * 1000.0 + (ts_end.tv_nsec - ts_start.tv_nsec) / 1e6;
-        //     //     //频率计算
-        //     //     int frequency = 1000 / (time / 1000000);
-        //     //     printf("发送频率：%d\n", frequency);
-        //     //     printf("发送时间：%ld\n", time);
-        //     //     clock_gettime(CLOCK_REALTIME, &ts_start);
-        //     // }
-        // }
-        // times++;
+            printf("电机%d得电\n", times);
+            }
+            if(times  == 2000)
+            {
+            EC_WRITE_U16(domain->domain_pd + motor_parm[i].ctrl_word, 0x07); // 电机得电
+            printf("电机%d使能\n", times);
+            }
+            if(times  == 3000)
+            {
+            EC_WRITE_U16(domain->domain_pd + motor_parm[i].ctrl_word, 0x0f); // 重置
+            printf("电机%d重置\n", times);
+            }
+            if(times > 4000) EC_WRITE_S32(domain->domain_pd + motor_parm[i].target_pos, target_pos); // 设置目标位置
+       // }
+        times++;
     }
 }
 void motor_main(struct _Domain* domain) {

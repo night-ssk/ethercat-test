@@ -1,15 +1,12 @@
 #include "ecrt.h"
-
+#include "timesync.h"
 /****************************************************************************/
 
-#define FREQUENCY 250 // 频率定义为1000Hz
 #define CLOCK_TO_USE CLOCK_REALTIME // 使用的时钟类型为实时时钟
 #define MEASURE_TIMING // 启用计时测量
 
 /****************************************************************************/
 
-#define NSEC_PER_SEC (1000000000L) // 每秒纳秒数
-#define PERIOD_NS (NSEC_PER_SEC / FREQUENCY) // 周期时间的纳秒数
 
 #define DIFF_NS(A, B) (((B).tv_sec - (A).tv_sec) * NSEC_PER_SEC + \
     (B).tv_nsec - (A).tv_nsec) // 计算两个timespec结构体之间的纳秒差异

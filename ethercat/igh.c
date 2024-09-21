@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include "timesync.h"
 
 #include "igh.h"
 /* Application parameters */
