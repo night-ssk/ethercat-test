@@ -5,7 +5,7 @@
 
 #include <ecrt.h> 
 
-#define MOTOR_NUM 1 // 根据需要设置电机数量
+#define MOTOR_NUM 6 // 根据需要设置电机数量
 
 extern ec_sync_info_t slave_motor_syncs[];
 
