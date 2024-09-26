@@ -1,0 +1,52 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Remote GDB Debug",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/igh_ethercat_dc_motor",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerServerAddress": "116.57.83.167:1234",
+      "miDebuggerPath": "/home/ssk/t507-env/LinuxSDK/out/t507/tlt507-evm/longan/buildroot/host/bin/aarch64-linux-gnu-gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "logging": {
+        "trace": true,
+        "traceResponse": true,
+        "engineLogging": true,
+        "programOutput": true,
+        "exceptions": true
+      }
+    },
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": false,
+      "cwd": "/home/ssk/code/demo/ethercat-driver",
+      "program": "/home/ssk/code/demo/ethercat-driver/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}
