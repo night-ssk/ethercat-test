@@ -5,14 +5,13 @@
 
 #include <pthread.h>
 #include "motor.h"
-typedef struct {
-    int target_pos;
-    int mode;
-} MotorCommand;
 
 // 定义一个命令集，包含所有电机的命令
 typedef struct {
-    MotorCommand commands[MOTOR_NUM];
+    int target_pos[MOTOR_NUM];
+    int previous_mode;
+    int mode;
+    int state[MOTOR_NUM];
 } MotorCommandSet;
 
 // 命令队列节点
@@ -33,7 +32,7 @@ typedef struct {
 void initQueue(CommandQueue* queue);
 void enqueue(CommandQueue* queue, MotorCommandSet* commandSet);
 int dequeue_non_blocking(CommandQueue* queue, MotorCommandSet* commandSet);
-
+void updateStatues(MotorCommandSet *cmd);
 void* readCommands(void* arg);
 
 #endif // TERM_H

@@ -14,22 +14,27 @@
 #include "motor.h"
 #include "timesync.h"
 #include "term.h"
-/**************************命令行信息*****************************/
-// 全局静态变量
-extern MotorCommand currentCommand[5];
-// 互斥锁
-extern pthread_mutex_t cmd_lock;
-int moveStartTime = 0;
-/**************************命令行信息*****************************/
 
 /************************设备信息*************************/
 
 enum device_info
 {
     motor1_alias = 0, motor1_position = 0, motor1_vid = 0x00000168, motor1_pid = 0x0000000a,
+    motor2_alias = 0, motor2_position = 1, motor2_vid = 0x000002e1, motor2_pid = 0x000002ec,
+    motor3_alias = 0, motor3_position = 2, motor3_vid = 0x000002e1, motor3_pid = 0x000002ec,
+    motor4_alias = 0, motor4_position = 3, motor4_vid = 0x000002e1, motor4_pid = 0x000002ec,
+    motor5_alias = 0, motor5_position = 4, motor5_vid = 0x000002e1, motor5_pid = 0x000002ec,
+    motor6_alias = 0, motor6_position = 5, motor6_vid = 0x000002e1, motor6_pid = 0x000002ec,
+    motor7_alias = 0, motor7_position = 6, motor7_vid = 0x000002e1, motor7_pid = 0x0,
 };
 const static struct _SlaveInfo slave_info[] = {
     {motor1_alias, motor1_position, motor1_vid, motor1_pid}, //直线电机驱动器1
+    {motor2_alias, motor2_position, motor2_vid, motor2_pid}, //直线电机驱动器2
+    {motor3_alias, motor3_position, motor3_vid, motor3_pid}, //直线电机驱动器3
+    {motor4_alias, motor4_position, motor4_vid, motor4_pid}, //直线电机驱动器4
+    {motor5_alias, motor5_position, motor5_vid, motor5_pid}, //直线电机驱动器5
+    {motor6_alias, motor6_position, motor6_vid, motor6_pid}, //直线电机驱动器6
+    {motor7_alias, motor7_position, motor7_vid, motor7_pid}, //直线电机驱动器7
 };
 /************************设备信息*************************/
 
@@ -42,28 +47,96 @@ const static ec_pdo_entry_reg_t domain_regs[] = {
         0x6040,0x00,&motor_parm[0].ctrl_word}, 
     {motor1_alias, motor1_position, motor1_vid, motor1_pid,
         0x6041,0x00,&motor_parm[0].status_word}, 
+
     {motor1_alias, motor1_position, motor1_vid, motor1_pid,
         0x607A,0x00,&motor_parm[0].target_pos}, 
     {motor1_alias, motor1_position, motor1_vid, motor1_pid,
         0x6064,0x00,&motor_parm[0].current_pos}, 
     {motor1_alias, motor1_position, motor1_vid, motor1_pid,
-        0x6081,0x00,&motor_parm[0].profile_velocity},
-    {motor1_alias, motor1_position, motor1_vid, motor1_pid,
-        0x6083,0x00,&motor_parm[0].profile_acc},
-    {motor1_alias, motor1_position, motor1_vid, motor1_pid,
-        0x6084,0x00,&motor_parm[0].profile_dec},
-    // {motor1_alias, motor1_position, motor1_vid, motor1_pid,
-    //     0x6092,0x01,&motor_parm[0].step_div},
-    {motor1_alias, motor1_position, motor1_vid, motor1_pid,
-        0x6098,0x00,&motor_parm[0].home_way},
-    {motor1_alias, motor1_position, motor1_vid, motor1_pid,
-        0x6099,0x01,&motor_parm[0].home_spd_high},
-    {motor1_alias, motor1_position, motor1_vid, motor1_pid,
-        0x6099,0x02,&motor_parm[0].home_spd_low},
-    {motor1_alias, motor1_position, motor1_vid, motor1_pid,
-        0x609A,0x00,&motor_parm[0].home_acc},   
-    {motor1_alias, motor1_position, motor1_vid, motor1_pid,
     0x6061,0x00,&motor_parm[0].operation_mode_display},
+//直线电机2
+    {motor2_alias, motor2_position, motor2_vid, motor2_pid,
+        0x6060,0x00,&motor_parm[1].operation_mode},
+    {motor2_alias, motor2_position, motor2_vid, motor2_pid,
+        0x6040,0x00,&motor_parm[1].ctrl_word},
+    {motor2_alias, motor2_position, motor2_vid, motor2_pid,
+        0x6041,0x00,&motor_parm[1].status_word},
+
+    {motor2_alias, motor2_position, motor2_vid, motor2_pid,
+        0x607A,0x00,&motor_parm[1].target_pos},
+    {motor2_alias, motor2_position, motor2_vid, motor2_pid,
+        0x6064,0x00,&motor_parm[1].current_pos},
+    {motor2_alias, motor2_position, motor2_vid, motor2_pid,
+        0x6061,0x00,&motor_parm[1].operation_mode_display},
+//直线电机3
+    {motor3_alias, motor3_position, motor3_vid, motor3_pid,
+        0x6060,0x00,&motor_parm[2].operation_mode},
+    {motor3_alias, motor3_position, motor3_vid, motor3_pid,
+        0x6040,0x00,&motor_parm[2].ctrl_word},
+    {motor3_alias, motor3_position, motor3_vid, motor3_pid,
+        0x6041,0x00,&motor_parm[2].status_word},
+
+    {motor3_alias, motor3_position, motor3_vid, motor3_pid,
+        0x607A,0x00,&motor_parm[2].target_pos},
+    {motor3_alias, motor3_position, motor3_vid, motor3_pid,
+        0x6064,0x00,&motor_parm[2].current_pos},
+    {motor3_alias, motor3_position, motor3_vid, motor3_pid,
+        0x6061,0x00,&motor_parm[2].operation_mode_display},
+//直线电机4
+    {motor4_alias, motor4_position, motor4_vid, motor4_pid,
+        0x6060,0x00,&motor_parm[3].operation_mode},
+    {motor4_alias, motor4_position, motor4_vid, motor4_pid,
+        0x6040,0x00,&motor_parm[3].ctrl_word},
+    {motor4_alias, motor4_position, motor4_vid, motor4_pid,
+        0x6041,0x00,&motor_parm[3].status_word},
+    {motor4_alias, motor4_position, motor4_vid, motor4_pid,
+        0x607A,0x00,&motor_parm[3].target_pos},
+    {motor4_alias, motor4_position, motor4_vid, motor4_pid,
+        0x6064,0x00,&motor_parm[3].current_pos},
+    {motor4_alias, motor4_position, motor4_vid, motor4_pid,
+        0x6061,0x00,&motor_parm[3].operation_mode_display},
+//直线电机5
+    {motor5_alias, motor5_position, motor5_vid, motor5_pid,
+        0x6060,0x00,&motor_parm[4].operation_mode},
+    {motor5_alias, motor5_position, motor5_vid, motor5_pid,
+        0x6040,0x00,&motor_parm[4].ctrl_word},
+    {motor5_alias, motor5_position, motor5_vid, motor5_pid,
+        0x6041,0x00,&motor_parm[4].status_word},
+
+    {motor5_alias, motor5_position, motor5_vid, motor5_pid,
+        0x607A,0x00,&motor_parm[4].target_pos},
+    {motor5_alias, motor5_position, motor5_vid, motor5_pid,
+        0x6064,0x00,&motor_parm[4].current_pos},
+    {motor5_alias, motor5_position, motor5_vid, motor5_pid,
+        0x6061,0x00,&motor_parm[4].operation_mode_display},
+//直线电机6
+    {motor6_alias, motor6_position, motor6_vid, motor6_pid,
+        0x6060,0x00,&motor_parm[5].operation_mode},
+    {motor6_alias, motor6_position, motor6_vid, motor6_pid,
+        0x6040,0x00,&motor_parm[5].ctrl_word},
+    {motor6_alias, motor6_position, motor6_vid, motor6_pid,
+        0x6041,0x00,&motor_parm[5].status_word},
+
+    {motor6_alias, motor6_position, motor6_vid, motor6_pid,
+        0x607A,0x00,&motor_parm[5].target_pos},
+    {motor6_alias, motor6_position, motor6_vid, motor6_pid,
+        0x6064,0x00,&motor_parm[5].current_pos},
+    {motor6_alias, motor6_position, motor6_vid, motor6_pid,
+        0x6061,0x00,&motor_parm[5].operation_mode_display},
+//直线电机7
+    {motor7_alias, motor7_position, motor7_vid, motor7_pid,
+        0x6060,0x00,&motor_parm[6].operation_mode},
+    {motor7_alias, motor7_position, motor7_vid, motor7_pid,
+        0x6040,0x00,&motor_parm[6].ctrl_word},
+    {motor7_alias, motor7_position, motor7_vid, motor7_pid,
+        0x6041,0x00,&motor_parm[6].status_word},
+
+    {motor7_alias, motor7_position, motor7_vid, motor7_pid,
+        0x607A,0x00,&motor_parm[6].target_pos},
+    {motor7_alias, motor7_position, motor7_vid, motor7_pid,
+        0x6064,0x00,&motor_parm[6].current_pos},
+    {motor7_alias, motor7_position, motor7_vid, motor7_pid,
+        0x6061,0x00,&motor_parm[6].operation_mode_display},
     {},
 };
 struct _Domain _domain;
@@ -161,7 +234,7 @@ void cyclic_task(struct _SlaveConfig *slave_config, struct _Domain *domain)
         }
 #endif
     /* 电机控制 */
-    motor_main(domain);
+    motor_main(slave_config, domain);
 
     ecrt_domain_queue(domain->domain);
     // 在 ecrt_master_send() 之前同步分布式时钟
@@ -240,8 +313,8 @@ void* ethercatMaster(void* arg)
     // 为每个从站配置分布式时钟 DC
     for (uint32_t i = 0; i < SLAVE_NUM; i++)
     {
-        ecrt_slave_config_sdo16(slave_config[i].sc, 0x1c32, 1, 2);
-        ecrt_slave_config_sdo16(slave_config[i].sc, 0x1c33, 1, 2);
+        // ecrt_slave_config_sdo16(slave_config[i].sc, 0x1c32, 1, 2);
+        // ecrt_slave_config_sdo16(slave_config[i].sc, 0x1c33, 1, 2);
         ecrt_slave_config_dc(slave_config[i].sc, 0x0300, PERIOD_NS, PERIOD_NS / 4, 0, 0);
     }
     printf("Configuration DC success.");
