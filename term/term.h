@@ -9,6 +9,7 @@
 // 定义一个命令集，包含所有电机的命令
 typedef struct {
     int target_pos[MOTOR_NUM];
+    int actual_pos[MOTOR_NUM];
     int previous_mode;
     int mode;
     int state[MOTOR_NUM];
@@ -25,7 +26,8 @@ typedef struct {
     CommandNode* front;
     CommandNode* rear;
     pthread_mutex_t mutex;
-    pthread_cond_t cond;
+    size_t size;    
+    size_t max;    
 } CommandQueue;
 
 // 队列接口
@@ -33,6 +35,5 @@ void initQueue(CommandQueue* queue);
 void enqueue(CommandQueue* queue, MotorCommandSet* commandSet);
 int dequeue_non_blocking(CommandQueue* queue, MotorCommandSet* commandSet);
 void updateStatues(MotorCommandSet *cmd);
-void* readCommands(void* arg);
-
+int term_init(void);
 #endif // TERM_H

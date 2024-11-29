@@ -1,12 +1,12 @@
 
-INCLUDE += -I /home/ssk/igh/_install/include
+INCLUDE += -I /home/ssk/ethercat/_install/include
 INCLUDE += -I ./ethercat 
 INCLUDE += -I ./term 
 INCLUDE += -I ./dcsync 
 CFLAGS  += -g -Wall -O2 $(DEFINES) $(INCLUDE)
 LIBS    += -lethercat
 LIBS    += -lpthread
-LDFLAGS := -L /home/ssk/igh/_install/lib
+LDFLAGS := -L /home/ssk/ethercat/_install/lib
 CXXFLAGS:= $(CFLAGS)
 SOURCE  := $(wildcard *.c) $(wildcard term/*.c) $(wildcard ethercat/*.c) $(wildcard dcsync/*.c) 
 OBJS    := $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCE))) 

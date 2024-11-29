@@ -5,7 +5,7 @@
 
 #include <ecrt.h> 
 
-#define MOTOR_NUM 7 // 根据需要设置电机数量
+#define MOTOR_NUM 6 // 根据需要设置电机数量
 
 extern ec_sync_info_t slave_motor_syncs[];
 
@@ -25,7 +25,7 @@ struct _motorParm {
 } motor_parm[MOTOR_NUM];
 
 enum motor_info {
-    MODEL_PP = 1, MODEL_PV = 3, MODEL_HOME = 6, MODEL_CSP = 8, MODEL_NONE = 0,
+    MODEL_PP = 1, MODEL_PV = 3, MODEL_HOME = 6, MODEL_CSP = 8, MODEL_ENABLE = 0, MODEL_DISABLE = -1
 };
 
 struct _SlaveConfig;

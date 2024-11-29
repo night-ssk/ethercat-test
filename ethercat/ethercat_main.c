@@ -25,7 +25,6 @@ enum device_info
     motor4_alias = 0, motor4_position = 3, motor4_vid = 0x000002e1, motor4_pid = 0x000002ec,
     motor5_alias = 0, motor5_position = 4, motor5_vid = 0x000002e1, motor5_pid = 0x000002ec,
     motor6_alias = 0, motor6_position = 5, motor6_vid = 0x000002e1, motor6_pid = 0x000002ec,
-    motor7_alias = 0, motor7_position = 6, motor7_vid = 0x000002e1, motor7_pid = 0x0,
 };
 const static struct _SlaveInfo slave_info[] = {
     {motor1_alias, motor1_position, motor1_vid, motor1_pid}, //直线电机驱动器1
@@ -34,7 +33,6 @@ const static struct _SlaveInfo slave_info[] = {
     {motor4_alias, motor4_position, motor4_vid, motor4_pid}, //直线电机驱动器4
     {motor5_alias, motor5_position, motor5_vid, motor5_pid}, //直线电机驱动器5
     {motor6_alias, motor6_position, motor6_vid, motor6_pid}, //直线电机驱动器6
-    {motor7_alias, motor7_position, motor7_vid, motor7_pid}, //直线电机驱动器7
 };
 /************************设备信息*************************/
 
@@ -123,20 +121,6 @@ const static ec_pdo_entry_reg_t domain_regs[] = {
         0x6064,0x00,&motor_parm[5].current_pos},
     {motor6_alias, motor6_position, motor6_vid, motor6_pid,
         0x6061,0x00,&motor_parm[5].operation_mode_display},
-//直线电机7
-    {motor7_alias, motor7_position, motor7_vid, motor7_pid,
-        0x6060,0x00,&motor_parm[6].operation_mode},
-    {motor7_alias, motor7_position, motor7_vid, motor7_pid,
-        0x6040,0x00,&motor_parm[6].ctrl_word},
-    {motor7_alias, motor7_position, motor7_vid, motor7_pid,
-        0x6041,0x00,&motor_parm[6].status_word},
-
-    {motor7_alias, motor7_position, motor7_vid, motor7_pid,
-        0x607A,0x00,&motor_parm[6].target_pos},
-    {motor7_alias, motor7_position, motor7_vid, motor7_pid,
-        0x6064,0x00,&motor_parm[6].current_pos},
-    {motor7_alias, motor7_position, motor7_vid, motor7_pid,
-        0x6061,0x00,&motor_parm[6].operation_mode_display},
     {},
 };
 struct _Domain _domain;
@@ -318,6 +302,10 @@ void* ethercatMaster(void* arg)
         ecrt_slave_config_dc(slave_config[i].sc, 0x0300, PERIOD_NS, PERIOD_NS / 4, 0, 0);
     }
     printf("Configuration DC success.");
+    ecrt_slave_config_sdo8(slave_config[0].sc, 0x6098, 0x00, 24); // 设置回零方式
+    ecrt_slave_config_sdo32(slave_config[0].sc, 0x6099, 0x01, 20000); // 设置回零速度-快
+    ecrt_slave_config_sdo32(slave_config[0].sc, 0x6099, 0x02, 20000); // 设置回零速度-慢
+    ecrt_slave_config_sdo32(slave_config[0].sc, 0x609A, 0x00, 200000); // 设置回零加速度
 
     // 选择参考时钟（第一个从站）
     ret = ecrt_master_select_reference_clock(master, slave_config[0].sc);

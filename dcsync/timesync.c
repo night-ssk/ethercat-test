@@ -1,5 +1,5 @@
 /**
- * @file timesync.cpp
+ * @file timesync.c
  * @author EtherCAT Developers
  * @brief 
  * @version 1.0
